@@ -10,6 +10,8 @@ sys.setdefaultencoding('UTF-8')
 class ptt_data_fetcher(object):
 
     def __init__(self):
+        self.now_page = ''
+        self.start_page = ''
         self.processing_pages = 1
         self.board_names = [
             # 'WomenTalk',
@@ -62,6 +64,8 @@ class ptt_data_fetcher(object):
             link = 'https://www.ptt.cc%s' % url
         else:
             link = 'https://www.ptt.cc%s' % self.now_page
+
+        print link
 
         res = rs.get(
             link,
@@ -142,3 +146,4 @@ class ptt_data_fetcher(object):
 if __name__ == '__main__':
     df = ptt_data_fetcher()
     df.start()
+    #df.get_article_content('/bbs/Gossiping/M.1442559625.A.F6E.html')
