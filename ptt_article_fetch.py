@@ -3,6 +3,7 @@
 import requests
 from bs4 import BeautifulSoup
 import sys
+import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -13,11 +14,11 @@ class ptt_data_fetcher(object):
     def __init__(self):
         self.now_page = ''
         self.start_page = ''
-        self.processing_pages = 1
+        self.processing_pages = 2
         self.board_names = [
             # 'WomenTalk',
-            'Gossiping',
-            # 'C_Chat',
+            #'Gossiping',
+            'C_Chat',
             # 'Tech_Job',
             # 'Travel',
             # 'Japan_Travel',
@@ -77,15 +78,10 @@ class ptt_data_fetcher(object):
     def process_page_list(self, plain_text_res):
         soup = BeautifulSoup(plain_text_res.text, "html.parser")
 
-        # print '=============='
         for entry in soup.select('a.wide'):
-            # print entry.text
             print entry.text
             if entry.text == u'‹ 上頁':
                 self.last_page = entry.get('href')
-
-            # print entry.get('href')
-        # print '=============='
 
         for entry in soup.select('.r-ent'):
             title = entry.select('.title')[0].text.strip()
@@ -98,14 +94,18 @@ class ptt_data_fetcher(object):
                 href = entry.select('.title a')[0]['href'].strip()
                 if href:
                     link = 'https://www.ptt.cc%s' % href
-                content = self.get_article_content(href)
+                content = self.get_article_content_v2(href)
+
+                total_content = ''
+                for line in content['content']:
+                    total_content = total_content + line + '\n'
 
                 print 'date: %s\nauthor: %s\ntitle: %s\nlink: %s\ncontent: %s' % (
                     date,
                     author,
                     title,
                     link,
-                    content
+                    total_content
                 )
 
                 if entry.select('span'):
@@ -145,23 +145,37 @@ class ptt_data_fetcher(object):
             return content
 
     def get_article_content_v2(self, href):
+        time.sleep(1)
         res = self.get_data(href)
-        pure_content = html2text.html2text(res.text)
+        h = html2text.HTML2Text()
+        h.ignore_links = True
+        pure_content = h.handle(res.text)
         pure_content_by_line = pure_content.split('\n')
 
+        split_line = ''
         for line in pure_content_by_line:
-            if line.startswith(u'文章網址'):
+            if u'文章網址' in line:
                 split_line = line
 
         content_last_line_index = pure_content_by_line.index(split_line)
-        res = {
-            'content': pure_content_by_line[:content_last_line_index+1],
-            'comment': pure_content_by_line[content_last_line_index+1:]
-        }
+        if split_line != '':
+            res = {
+                'content': pure_content_by_line[:content_last_line_index+2],
+                'comment': pure_content_by_line[content_last_line_index+2:]
+            }
+        else:
+            res = {
+                'content': pure_content_by_line,
+                'comment': ''
+            }
         return res
 
     def find_keyword(self, total_content):
         keyword = '金'
+        for line in total_content['content']:
+            if keyword in line:
+                print line
+
         for line in total_content['comment']:
             if keyword in line:
                 print line
@@ -175,5 +189,12 @@ if __name__ == '__main__':
         if sys.argv[1] == 'get_keyword_from_article':
             total_content = df.get_article_content_v2('/bbs/Gossiping/M.1442559625.A.F6E.html')
             df.find_keyword(total_content)
+        elif sys.argv[1] == 'get_article_v2':
+            res = df.get_article_content_v2('/bbs/Gossiping/M.1445161731.A.0DE.html')
+            for line in res['content']:
+                print line.strip()
+            print '======================='
+            for line in res['comment']:
+                print line
         else:
             print 'unsupport command'
