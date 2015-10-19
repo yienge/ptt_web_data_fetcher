@@ -4,8 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import sys
 reload(sys)
-sys.setdefaultencoding('UTF-8')
+sys.setdefaultencoding('utf-8')
 
+import html2text
 
 class ptt_data_fetcher(object):
 
@@ -143,7 +144,36 @@ class ptt_data_fetcher(object):
         else:
             return content
 
+    def get_article_content_v2(self, href):
+        res = self.get_data(href)
+        pure_content = html2text.html2text(res.text)
+        pure_content_by_line = pure_content.split('\n')
+
+        for line in pure_content_by_line:
+            if line.startswith(u'文章網址'):
+                split_line = line
+
+        content_last_line_index = pure_content_by_line.index(split_line)
+        res = {
+            'content': pure_content_by_line[:content_last_line_index+1],
+            'comment': pure_content_by_line[content_last_line_index+1:]
+        }
+        return res
+
+    def find_keyword(self, total_content):
+        keyword = '金'
+        for line in total_content['comment']:
+            if keyword in line:
+                print line
+
 if __name__ == '__main__':
     df = ptt_data_fetcher()
-    df.start()
-    #df.get_article_content('/bbs/Gossiping/M.1442559625.A.F6E.html')
+
+    if len(sys.argv) == 1:
+        df.start()
+    else:
+        if sys.argv[1] == 'get_keyword_from_article':
+            total_content = df.get_article_content_v2('/bbs/Gossiping/M.1442559625.A.F6E.html')
+            df.find_keyword(total_content)
+        else:
+            print 'unsupport command'
