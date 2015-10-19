@@ -14,12 +14,12 @@ class ptt_data_fetcher(object):
     def __init__(self):
         self.now_page = ''
         self.start_page = ''
-        self.processing_pages = 2
+        self.processing_pages = 1
         self.board_names = [
             # 'WomenTalk',
-            #'Gossiping',
-            'C_Chat',
-            # 'Tech_Job',
+            # 'Gossiping',
+            # 'C_Chat',
+            'Tech_Job',
             # 'Travel',
             # 'Japan_Travel',
             # 'Boy-Girl',
@@ -152,10 +152,7 @@ class ptt_data_fetcher(object):
         pure_content = h.handle(res.text)
         pure_content_by_line = pure_content.split('\n')
 
-        split_line = ''
-        for line in pure_content_by_line:
-            if u'文章網址' in line:
-                split_line = line
+        split_line = self.find_split_line(pure_content_by_line)
 
         content_last_line_index = pure_content_by_line.index(split_line)
         if split_line != '':
@@ -169,6 +166,18 @@ class ptt_data_fetcher(object):
                 'comment': ''
             }
         return res
+
+    def find_split_line(self, content_by_line):
+        split_line = ''
+        for index, line in list(enumerate(content_by_line)):
+            if u'文章網址' in line:
+                split_line = line
+                if u'編輯' in content_by_line[index + 1]:
+                    split_line = content_by_line[index + 1]
+                return split_line
+            elif u'編輯' in line:
+                split_line = line
+                return split_line
 
     def find_keyword(self, total_content):
         keyword = '金'
