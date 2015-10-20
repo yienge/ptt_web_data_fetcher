@@ -210,7 +210,7 @@ class ptt_data_fetcher(object):
         url_segments = href.split('/')
         board_name_index = self.board_name_index_mapping[url_segments[2]]
         article_name = url_segments[3].replace('.', '').replace('html', '')
-        return '%s%s' % (board_name_index, article_name)
+        return '%s_%s' % (board_name_index, article_name)
 
 if __name__ == '__main__':
     df = ptt_data_fetcher()
