@@ -30,6 +30,21 @@ class ptt_data_fetcher(object):
             # 'ingress'
         ]
 
+        self.board_name_index_mapping = {
+            'WomenTalk'    : '00001',
+            'Gossiping'    : '00002',
+            'C_Chat'       : '00003',
+            'Tech_Job'     : '00004',
+            'Travel'       : '00005',
+            'Japan_Travel' : '00006',
+            'Boy-Girl'     : '00007',
+            'StupidClown'  : '00008',
+            'ONE_PIECE'    : '00009',
+            'WOW'          : '00010',
+            'joke'         : '00011',
+            'ingress'      : '00012'
+        }
+
     def is_int(self, value):
         try:
             value = int(value)
@@ -94,17 +109,19 @@ class ptt_data_fetcher(object):
                 href = entry.select('.title a')[0]['href'].strip()
                 if href:
                     link = 'https://www.ptt.cc%s' % href
+                    article_serial = self.construct_serial_from_href(href)
                 content = self.get_article_content_v2(href)
 
                 total_content = ''
                 for line in content['content']:
                     total_content = total_content + line + '\n'
 
-                print 'date: %s\nauthor: %s\ntitle: %s\nlink: %s\ncontent: %s' % (
+                print 'date: %s\nauthor: %s\ntitle: %s\nlink: %s\narticle_serial:%s\ncontent: %s' % (
                     date,
                     author,
                     title,
                     link,
+                    article_serial,
                     total_content
                 )
 
@@ -188,6 +205,12 @@ class ptt_data_fetcher(object):
         for line in total_content['comment']:
             if keyword in line:
                 print line
+
+    def construct_serial_from_href(self, href):
+        url_segments = href.split('/')
+        board_name_index = self.board_name_index_mapping[url_segments[2]]
+        article_name = url_segments[3].replace('.', '').replace('html', '')
+        return '%s%s' % (board_name_index, article_name)
 
 if __name__ == '__main__':
     df = ptt_data_fetcher()
